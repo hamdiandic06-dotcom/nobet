@@ -59,55 +59,55 @@
       color: #1e40af;
     }
 
-    /* 3. Gündüz: Daha koyu bir renk (Deep Slate Teal / Petrol Blue) */
-    .shift-gunduz {
-      background-color: #1e4e68;
-      border: 1.5px solid #163a4e;
-      color: #ffffff;
-    }
-
-    /* 4. Nöbet: Siyah (Pure Deep Black) */
-    .shift-nobet {
-      background-color: #09090b;
-      border: 1.5px solid #000000;
-      color: #ffffff;
-    }
-
-    /* Empty / Unassigned Day Box */
-    .shift-empty {
-      background-color: #ffffff;
-      border: 1.5px dashed #cbd5e1;
-      color: #64748b;
-    }
-
-    /* Inactive Padding Cell (Prev/Next Month) */
-    .cell-pad {
-      background-color: #f8fafc;
-      border: 1px solid #f1f5f9;
-    }
-
-    /* Subtle tactile tap animation */
-    .day-box {
-      transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s ease;
-      user-select: none;
-    }
-    .day-box:active {
-      transform: scale(0.95);
-    }
-
-    /* Bird gentle float animation on live UI */
-    @keyframes gentleBob {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-3px); }
-    }
-    .bird-bob {
-      animation: gentleBob 2.8s ease-in-out infinite;
-    }
-
-    /* Export mode helper to freeze animations during screenshot */
+    /* Export mode helper to freeze animations and prevent text clipping/shifting during screenshot */
     .exporting .bird-bob {
       animation: none !important;
       transform: none !important;
+    }
+
+    .exporting #exportCard {
+      width: 512px !important;
+      max-width: 512px !important;
+      padding: 20px !important;
+    }
+
+    .exporting #exportCard .truncate {
+      overflow: visible !important;
+      text-overflow: clip !important;
+      white-space: normal !important;
+    }
+
+    .exporting #exportCard #exportMonthBadge {
+      line-height: 1.3 !important;
+      padding-top: 3px !important;
+      padding-bottom: 3px !important;
+    }
+
+    .exporting #exportCard #exportTitleDisplay {
+      line-height: 1.3 !important;
+    }
+
+    .exporting #exportCard #birdMoodTag {
+      line-height: 1.3 !important;
+      padding-top: 3px !important;
+      padding-bottom: 3px !important;
+    }
+
+    .exporting #exportCard .day-box {
+      min-height: 74px !important;
+      padding: 6px !important;
+      overflow: visible !important;
+    }
+
+    .exporting #exportCard .day-box .shift-title {
+      font-size: 9.5px !important;
+      line-height: 1.25 !important;
+    }
+
+    .exporting #exportCard .day-box .shift-hours {
+      font-size: 7.5px !important;
+      line-height: 1.2 !important;
+      margin-top: 2px !important;
     }
   </style>
 </head>
@@ -721,8 +721,8 @@
             ${miniBirdHtml}
           </div>
           <div class="w-full mt-1">
-            <div class="text-[9.5px] sm:text-[10px] font-bold leading-tight truncate">${shift.shortLabel}</div>
-            ${shift.hoursText ? `<div class="text-[8px] opacity-80 leading-tight truncate">${shift.hoursText}</div>` : ''}
+            <div class="shift-title text-[9.5px] sm:text-[10px] font-bold leading-tight truncate">${shift.shortLabel}</div>
+            ${shift.hoursText ? `<div class="shift-hours text-[8px] opacity-80 leading-tight truncate">${shift.hoursText}</div>` : ''}
           </div>
         `;
         gridEl.appendChild(cell);
@@ -878,11 +878,16 @@
       document.body.classList.add('exporting');
 
       try {
+        // Wait a frame so .exporting layout & typography apply cleanly before capture
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
         const canvas = await html2canvas(exportCard, {
-          scale: 3, // Crisp HD output for WhatsApp & gallery
+          scale: 2.5, // Crisp HD output for WhatsApp & gallery without extreme memory load
           backgroundColor: '#ffffff',
           useCORS: true,
-          logging: false
+          logging: false,
+          width: exportCard.scrollWidth,
+          height: exportCard.scrollHeight
         });
 
         return await new Promise((resolve, reject) => {
