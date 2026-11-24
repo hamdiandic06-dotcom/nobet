@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1e293b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Nöbet Takvimi" />
+  <meta name="description" content="Aylık nöbet çizelgesi oluşturucu ve yüksek çözünürlüklü JPEG dışa aktarma uygulaması." />
+  <title>Aylık Nöbet Takvimi</title>
+
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- html2canvas for crisp JPEG export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Inline SVG App Icon & Dynamic PWA Manifest Setup -->
+  <link id="apple-touch-icon" rel="apple-touch-icon" href="" />
+  <link id="pwa-manifest" rel="manifest" href="" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    .font-display {
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    }
+
+    /* Custom Shift Colors (Strictly matching user specifications) */
+    /* 1. Tatil Günü: Açık bir renk (Soft Warm Mint / Cream) */
+    .shift-tatil {
+      background-color: #ecfdf5;
+      border: 1.5px solid #a7f3d0;
+      color: #065f46;
+    }
+
+    /* 2. Nöbet Çıkışı: Açık bir renk (Soft Pastel Sky Blue) */
+    .shift-cikis {
+      background-color: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      color: #1e40af;
+    }
+
+    /* 3. Gündüz: Daha koyu bir renk (Deep Slate Teal / Petrol Blue) */
+    .shift-gunduz {
+      background-color: #1e4e68;
+      border: 1.5px solid #163a4e;
+      color: #ffffff;
+    }
+
+    /* 4. Nöbet: Siyah (Pure Deep Black) */
+    .shift-nobet {
+      background-color: #09090b;
+      border: 1.5px solid #000000;
+      color: #ffffff;
+    }
+
+    /* Empty / Unassigned Day Box */
+    .shift-empty {
+      background-color: #ffffff;
+      border: 1.5px dashed #cbd5e1;
+      color: #64748b;
+    }
+
+    /* Inactive Padding Cell (Prev/Next Month) */
+    .cell-pad {
+      background-color: #f8fafc;
+      border: 1px solid #f1f5f9;
+    }
+
+    /* Subtle tactile tap animation */
+    .day-box {
+      transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s ease;
+      user-select: none;
+    }
+    .day-box:active {
+      transform: scale(0.95);
+    }
+
+    /* Bird gentle float animation on live UI */
+    @keyframes gentleBob {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+    }
+    .bird-bob {
+      animation: gentleBob 2.8s ease-in-out infinite;
+    }
+
+    /* Export mode helper to freeze animations during screenshot */
+    .exporting .bird-bob {
+      animation: none !important;
+      transform: none !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-28">
+
+  <!-- Top App Navigation Bar (Not included in JPEG export) -->
+  <header class="sticky top-0 z-30 bg-slate-900 text-white shadow-md px-4 py-3">
+    <div class="max-w-lg mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-300/30 flex items-center justify-center text-lg">
+          🐦
+        </div>
+        <div>
+          <h1 class="font-display font-bold text-base leading-tight tracking-tight">Nöbet Çizelgesi</h1>
+          <p class="text-[11px] text-slate-300">Dokunarak işaretle, JPEG indir</p>
+        </div>
+      </div>
+
+      <button id="btnInstallHelp" type="button" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 px-3 py-2 rounded-xl border border-slate-700 transition">
+        📲 Ana Ekrana Ekle
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-lg mx-auto px-3 pt-4 space-y-4">
+
+    <!-- Control Panel Card (Not included in JPEG export) -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-3.5 space-y-3">
+      <!-- Month Navigation & Title Input -->
+      <div class="flex items-center justify-between gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200/70">
+        <button id="prevMonthBtn" type="button" aria-label="Önceki Ay" class="w-10 h-10 rounded-lg bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 font-bold active:scale-95 transition">
+          ◀
+        </button>
+        <div class="text-center flex-1">
+          <div id="controlMonthLabel" class="font-display font-extrabold text-slate-900 text-base">Aralık 2026</div>
+          <div class="text-[11px] text-slate-500">Otomatik kaydedilir</div>
+        </div>
+        <button id="nextMonthBtn" type="button" aria-label="Sonraki Ay" class="w-10 h-10 rounded-lg bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 font-bold active:scale-95 transition">
+          ▶
+        </button>
+      </div>
+
+      <!-- Custom Header Title Input -->
+      <div>
+        <label for="scheduleTitleInput" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+          Takvim Başlığı (İsteğe Bağlı İsim / Birim)
+        </label>
+        <input
+          id="scheduleTitleInput"
+          type="text"
+          maxlength="42"
+          placeholder="Örn: Gamze Nur Andıç"
+          class="w-full px-3 py-2.5 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:bg-white transition"
+        />
+      </div>
+
+      <!-- Brush Mode Selector (Tap a shift type then tap days, or cycle mode) -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+      <!-- Brush Mode Selector (4 direct shift buttons without 'Sırayla' or 'Fırça' labels) -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Gün Türü Seçimi</span>
+        </div>
+        <div class="grid grid-cols-4 gap-1.5">
+          <button type="button" data-brush="tatil" class="brush-btn ring-2 ring-offset-1 ring-slate-900 scale-[1.03] flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-900 text-[11px] font-semibold transition">
+            <span id="brushIconTatil" class="w-5 h-5 mb-0.5 flex items-center justify-center"></span>
+            <span>Tatil</span>
+          </button>
+          <button type="button" data-brush="cikis" class="brush-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-blue-300 bg-blue-50 text-blue-900 text-[11px] font-semibold transition">
+            <span id="brushIconCikis" class="w-5 h-5 mb-0.5 flex items-center justify-center"></span>
+            <span>Nöbet Çıkışı</span>
+          </button>
+          <button type="button" data-brush="gunduz" class="brush-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-[#1e4e68] bg-[#1e4e68] text-white text-[11px] font-semibold transition">
+            <span id="brushIconGunduz" class="w-5 h-5 mb-0.5 flex items-center justify-center"></span>
+            <span>Gündüz</span>
+            <span class="text-[9px] opacity-80 font-normal leading-tight">08:00-16:00</span>
+          </button>
+          <button type="button" data-brush="nobet" class="brush-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-black bg-zinc-950 text-white text-[11px] font-semibold transition">
+            <span id="brushIconNobet" class="w-5 h-5 mb-0.5 flex items-center justify-center"></span>
+            <span>Nöbet</span>
+            <span class="text-[9px] opacity-80 font-normal leading-tight">16:00-08:00</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Utility Actions -->
+      <div class="flex items-center justify-end pt-1">
+        <button id="clearMonthBtn" type="button" class="w-full py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-200 text-xs font-semibold transition">
+          🗑️ Bu Ayı Temizle
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- EXPORTABLE JPEG CARD AREA (Everything inside #exportCard becomes JPEG) -->
+    <!-- ===================================================================== -->
+    <section id="exportWrapper" class="rounded-2xl shadow-md overflow-hidden border border-slate-200 bg-white">
+      <div id="exportCard" class="bg-white p-4 sm:p-5">
+
+        <!-- Top Banner with Cute Bird Mascot & Dynamic Mood Expression -->
+        <div class="flex items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-200">
+          <div class="min-w-0 flex-1">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1">
+              <span id="exportMonthBadge">ARALIK 2026</span>
+            </div>
+            <h2 id="exportTitleDisplay" class="font-display font-extrabold text-slate-900 text-lg sm:text-xl leading-snug truncate">
+              Aylık Nöbet Çizelgesi
+            </h2>
+            <p id="birdMoodCaption" class="text-xs text-slate-500 font-medium mt-0.5">
+              Düzenli ve huzurlu bir ay dilerim!
+            </p>
+          </div>
+
+          <!-- Cute Bird SVG Container right above the calendar boxes -->
+          <div id="birdMascotBox" title="Kuş ifadesini değiştirmek için dokun" class="shrink-0 cursor-pointer select-none flex flex-col items-center">
+            <div id="birdSvgContainer" class="bird-bob w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-gradient-to-b from-amber-50 to-orange-50/70 border border-amber-200/80 flex items-center justify-center p-1 shadow-2xs">
+              <!-- Dynamic Cute Bird SVG injected by JS -->
+            </div>
+            <span id="birdMoodTag" class="mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
+              Neşeli Kuş
+            </span>
+          </div>
+        </div>
+
+        <!-- Compact 4-Color Legend Bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-3 text-[10px] font-semibold">
+          <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg shift-tatil">
+            <span id="legendIconTatil" class="w-4 h-4 shrink-0 flex items-center justify-center"></span>
+            <span class="truncate">Tatil Günü</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg shift-cikis">
+            <span id="legendIconCikis" class="w-4 h-4 shrink-0 flex items-center justify-center"></span>
+            <span class="truncate">Nöbet Çıkışı</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg shift-gunduz">
+            <span id="legendIconGunduz" class="w-4 h-4 shrink-0 flex items-center justify-center"></span>
+            <span class="truncate">Gündüz (08-16)</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg shift-nobet">
+            <span id="legendIconNobet" class="w-4 h-4 shrink-0 flex items-center justify-center"></span>
+            <span class="truncate">Nöbet (16-08)</span>
+          </div>
+        </div>
+
+        <!-- Weekday Column Headers (Monday to Sunday) -->
+        <div class="grid grid-cols-7 gap-1.5 mb-1.5 text-center">
+          <div class="text-[11px] font-bold text-slate-600 py-1 bg-slate-100 rounded-lg">Pzt</div>
+          <div class="text-[11px] font-bold text-slate-600 py-1 bg-slate-100 rounded-lg">Sal</div>
+          <div class="text-[11px] font-bold text-slate-600 py-1 bg-slate-100 rounded-lg">Çar</div>
+          <div class="text-[11px] font-bold text-slate-600 py-1 bg-slate-100 rounded-lg">Per</div>
+          <div class="text-[11px] font-bold text-slate-600 py-1 bg-slate-100 rounded-lg">Cum</div>
+          <div class="text-[11px] font-bold text-rose-600 py-1 bg-rose-50 rounded-lg">Cmt</div>
+          <div class="text-[11px] font-bold text-rose-600 py-1 bg-rose-50 rounded-lg">Paz</div>
+        </div>
+
+        <!-- Calendar Grid Boxes -->
+        <div id="calendarGrid" class="grid grid-cols-7 gap-1.5">
+          <!-- Day boxes rendered dynamically via JS -->
+        </div>
+
+        <!-- Bottom Summary Footer (Compact, clean summary requested by user) -->
+        <div class="mt-3.5 pt-3 border-t border-slate-200 bg-slate-50/90 rounded-xl px-3 py-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-slate-700">
+            <div class="font-extrabold text-slate-900 text-xs">
+              ⏱️ Toplam Çalışma: <span id="statTotalHours" class="text-[#1e4e68]">0 Saat</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-semibold">
+              <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-black"></span>
+                Nöbet: <strong id="statNobet" class="text-slate-950">0</strong>
+              </span>
+              <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-[#1e4e68]"></span>
+                Gündüz: <strong id="statGunduz" class="text-slate-950">0</strong>
+              </span>
+              <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                Nöbet Çıkışı: <strong id="statCikis" class="text-slate-950">0</strong>
+              </span>
+              <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                Tatil: <strong id="statTatil" class="text-slate-950">0</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Sticky Bottom Action Bar for JPEG Export & Share -->
+  <div class="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 shadow-lg">
+    <div class="max-w-lg mx-auto flex items-center gap-2.5">
+      <button id="downloadJpegBtn" type="button" class="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-display font-bold text-sm py-3.5 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition">
+        <span>🖼️ JPEG İndir</span>
+      </button>
+      <button id="shareJpegBtn" type="button" class="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-display font-bold text-sm py-3.5 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition">
+        <span>📤 Paylaş (WhatsApp)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Preview / Fallback Modal (Shown if direct share isn't supported or for easy long-press save on iOS) -->
+  <div id="previewModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200">
+      <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-display font-bold text-slate-900 text-sm">JPEG Çıktısı Hazır</h3>
+        <button id="closePreviewModal" type="button" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 font-bold flex items-center justify-center">✕</button>
+      </div>
+      <div class="p-4 bg-slate-100 max-h-[65vh] overflow-y-auto flex flex-col items-center">
+        <img id="generatedJpegImg" src="" alt="Aylık Nöbet Takvimi JPEG" class="w-full h-auto rounded-xl shadow-md border border-slate-200" />
+        <p class="text-[11px] text-slate-600 text-center mt-2.5">
+          iPhone/Android'de görselin üzerine basılı tutup <strong>"Fotoğraflara Kaydet"</strong> diyebilir veya aşağıdaki butondan indirebilirsiniz.
+        </p>
+      </div>
+      <div class="p-3 bg-white border-t border-slate-200 flex gap-2">
+        <a id="modalDownloadLink" download="nobet-takvimi.jpg" href="#" class="flex-1 text-center bg-slate-900 text-white font-bold text-xs py-3 rounded-xl">
+          ⬇️ Dosya Olarak İndir
+        </a>
+        <button id="modalCloseBtn2" type="button" class="px-4 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs">
+          Kapat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add to Home Screen Guide Modal -->
+  <div id="installModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display font-bold text-slate-900 text-base">📲 Telefona Uygulama Olarak Kur</h3>
+        <button id="closeInstallModal" type="button" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 font-bold">✕</button>
+      </div>
+      <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="font-bold text-slate-900 mb-1">🍎 iPhone (Safari):</div>
+          Alt menüdeki <strong>Paylaş</strong> (kare içinde yukarı ok) simgesine dokunun, aşağı kaydırıp <strong>"Ana Ekrana Ekle"</strong> seçeneğine basın.
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="font-bold text-slate-900 mb-1">🤖 Android (Chrome):</div>
+          Sağ üst köşedeki <strong>⋮ (Üç Nokta)</strong> menüsüne dokunun ve <strong>"Ana ekrana ekle"</strong> veya <strong>"Uygulamayı yükle"</strong> seçeneğine basın.
+        </div>
+      </div>
+      <button id="confirmInstallModal" type="button" class="w-full py-3 rounded-xl bg-slate-900 text-white font-bold text-xs">
+        Anladım
+      </button>
+    </div>
+  </div>
+
+  <!-- Custom Confirmation Modal (Replaces window.confirm) -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+      <h3 id="confirmModalTitle" class="font-display font-bold text-slate-900 text-base">Emin misiniz?</h3>
+      <p id="confirmModalText" class="text-xs text-slate-600 leading-relaxed">Bu aydaki tüm işaretlemeler temizlenecek.</p>
+      <div class="flex gap-2">
+        <button id="confirmCancelBtn" type="button" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs">Vazgeç</button>
+        <button id="confirmOkBtn" type="button" class="flex-1 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs">Evet, Temizle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastBox" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-200">
+    <div id="toastText" class="bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg border border-slate-700">
+      Kaydedildi
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Aylık Nöbet Takvimi & JPEG Oluşturucu
+     * Single-file PWA with dynamic cute bird mascot expressions,
+     * 4-color shift coding, automatic working hour statistics, and JPEG export.
+     */
+
+    // =========================================================================
+    // 1. PWA Manifest & SVG Icon Setup (Self-contained)
+    // =========================================================================
+    (function setupPWA() {
+      const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <rect width="512" height="512" rx="112" fill="#1e293b"/>
+        <circle cx="256" cy="272" r="145" fill="#fbbf24"/>
+        <ellipse cx="256" cy="312" rx="95" ry="82" fill="#fef3c7"/>
+        <polygon points="256,258 232,286 280,286" fill="#f97316"/>
+        <circle cx="206" cy="232" r="20" fill="#0f172a"/>
+        <circle cx="212" cy="226" r="7" fill="#ffffff"/>
+        <circle cx="306" cy="232" r="20" fill="#0f172a"/>
+        <circle cx="312" cy="226" r="7" fill="#ffffff"/>
+        <path d="M235 130 Q256 90 275 132 Q295 95 305 138" fill="none" stroke="#f59e0b" stroke-width="18" stroke-linecap="round"/>
+      </svg>`;
+      const encodedIcon = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg);
+      const appleIconEl = document.getElementById('apple-touch-icon');
+      if (appleIconEl) appleIconEl.href = encodedIcon;
+
+      const manifest = {
+        name: 'Aylık Nöbet Takvimi',
+        short_name: 'Nöbet Takvimi',
+        description: 'Aylık nöbet listesi oluşturucu ve JPEG çıktı aracı',
+        start_url: '.',
+        display: 'standalone',
+        background_color: '#f1f5f9',
+        theme_color: '#1e293b',
+        icons: [
+          {
+            src: encodedIcon,
+            sizes: '512x512',
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
+          }
+        ]
+      };
+      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const manifestEl = document.getElementById('pwa-manifest');
+      if (manifestEl) manifestEl.href = URL.createObjectURL(manifestBlob);
+    })();
+
+    // =========================================================================
+    // 2. Application State & Shift Definitions
+    // =========================================================================
+    const TURKISH_MONTHS = [
+      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    ];
+
+    const SHIFT_TYPES = {
+      empty: {
+        key: 'empty',
+        label: 'Seç',
+        shortLabel: '—',
+        hoursText: '',
+        hours: 0,
+        cssClass: 'shift-empty'
+      },
+      tatil: {
+        key: 'tatil',
+        label: 'Tatil Günü',
+        shortLabel: 'Tatil',
+        hoursText: 'İzinli',
+        hours: 0,
+        cssClass: 'shift-tatil'
+      },
+      cikis: {
+        key: 'cikis',
+        label: 'Nöbet Çıkışı',
+        shortLabel: 'Nöbet Çıkışı',
+        hoursText: 'Çıkış',
+        hours: 0,
+        cssClass: 'shift-cikis'
+      },
+      gunduz: {
+        key: 'gunduz',
+        label: 'Gündüz',
+        shortLabel: 'Gündüz',
+        hoursText: '08:00-16:00',
+        hours: 8,
+        cssClass: 'shift-gunduz'
+      },
+      nobet: {
+        key: 'nobet',
+        label: 'Nöbet',
+        shortLabel: 'Nöbet',
+        hoursText: '16:00-08:00',
+        hours: 16,
+        cssClass: 'shift-nobet'
+      }
+    };
+
+    const CYCLE_ORDER = ['empty', 'tatil', 'cikis', 'gunduz', 'nobet'];
+
+    // Default to next month if we're in the last week of the month, else current month
+    const now = new Date();
+    let initialYear = now.getFullYear();
+    let initialMonth = now.getMonth();
+    if (now.getDate() >= 20) {
+      initialMonth += 1;
+      if (initialMonth > 11) {
+        initialMonth = 0;
+        initialYear += 1;
+      }
+    }
+
+    const state = {
+      year: initialYear,
+      month: initialMonth, // 0 - 11
+      brush: 'tatil',      // 'tatil' | 'cikis' | 'gunduz' | 'nobet'
+      birdMood: 'auto',    // 'auto' | 'tatil' | 'cikis' | 'gunduz' | 'nobet'
+      lastTappedType: null,
+      schedules: {},       // { "2026-11": { "1": "gunduz", "2": "nobet", ... } }
+      titles: {}           // { "2026-11": "Gamze Nur Andıç" }
+    };
+
+    // =========================================================================
+    // 3. Storage & Utility Helpers
+    // =========================================================================
+    const STORAGE_KEY = 'nobet_takvimi_data_v1';
+
+    function getMonthKey() {
+      return `${state.year}-${state.month}`;
+    }
+
+    function loadStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            state.schedules = parsed.schedules || {};
+            state.titles = parsed.titles || {};
+          }
+        }
+      } catch (e) {
+        console.warn('Kayıt okunamadı:', e);
+      }
+    }
+
+    function saveStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          schedules: state.schedules,
+          titles: state.titles
+        }));
+      } catch (e) {
+        console.warn('Kayıt yazılamadı:', e);
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      const text = document.getElementById('toastText');
+      if (!box || !text) return;
+      text.textContent = msg;
+      box.classList.remove('opacity-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        box.classList.add('opacity-0');
+      }, 2200);
+    }
+
+    // =========================================================================
+    // 4. Cute Bird SVG Generators (Mascot + Mini Day Icons)
+    // =========================================================================
+    function getBirdSvg(mood, isMini = false) {
+      const sizeClass = isMini ? 'w-full h-full' : 'w-16 h-16';
+      // Base round cute bird body
+      let extras = '';
+      let eyes = `
+        <circle cx="38" cy="46" r="4.5" fill="#0f172a"/>
+        <circle cx="39.5" cy="44.5" r="1.6" fill="#ffffff"/>
+        <circle cx="62" cy="46" r="4.5" fill="#0f172a"/>
+        <circle cx="63.5" cy="44.5" r="1.6" fill="#ffffff"/>
+      `;
+      let cheeks = `
+        <ellipse cx="30" cy="54" rx="5" ry="3" fill="#fb7185" opacity="0.55"/>
+        <ellipse cx="70" cy="54" rx="5" ry="3" fill="#fb7185" opacity="0.55"/>
+      `;
+
+      if (mood === 'tatil') {
+        // Sunglasses & joyful holiday vibe
+        eyes = `
+          <rect x="27" y="40" width="19" height="11" rx="3.5" fill="#0f172a"/>
+          <rect x="54" y="40" width="19" height="11" rx="3.5" fill="#0f172a"/>
+          <line x1="46" y1="44" x2="54" y2="44" stroke="#0f172a" stroke-width="3"/>
+          <line x1="30" y1="43" x2="35" y2="48" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="57" y1="43" x2="62" y2="48" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round"/>
+        `;
+        extras = `
+          <circle cx="80" cy="22" r="7" fill="#facc15"/>
+        `;
+      } else if (mood === 'cikis') {
+        // Sleepy closed eyes & nightcap / Zzz
+        eyes = `
+          <path d="M32 47 Q38 52 44 47" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>
+          <path d="M56 47 Q62 52 68 47" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>
+        `;
+        extras = `
+          <path d="M36 24 L50 10 L66 24 Z" fill="#60a5fa"/>
+          <circle cx="50" cy="9" r="4" fill="#ffffff"/>
+          <text x="72" y="26" font-size="11" font-weight="800" fill="#2563eb">zZ</text>
+        `;
+      } else if (mood === 'nobet') {
+        // Night shift owl-like alert eyes + crescent moon / coffee mug
+        eyes = `
+          <circle cx="38" cy="46" r="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+          <circle cx="38" cy="46" r="3.5" fill="#0f172a"/>
+          <circle cx="39" cy="45" r="1.2" fill="#ffffff"/>
+          <circle cx="62" cy="46" r="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+          <circle cx="62" cy="46" r="3.5" fill="#0f172a"/>
+          <circle cx="63" cy="45" r="1.2" fill="#ffffff"/>
+        `;
+        extras = `
+          <path d="M76 15 A8 8 0 1 0 85 26 A6.5 6.5 0 1 1 76 15 Z" fill="#f59e0b"/>
+          <rect x="66" y="64" width="14" height="12" rx="2.5" fill="#78350f"/>
+          <path d="M80 67 H83 A3 3 0 0 1 83 73 H80" fill="none" stroke="#78350f" stroke-width="2"/>
+        `;
+      } else {
+        // Gündüz / Default happy energetic bird
+        eyes = `
+          <path d="M33 46 Q38 40 43 46" fill="none" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round"/>
+          <path d="M57 46 Q62 40 67 46" fill="none" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round"/>
+        `;
+      }
+
+      return `
+        <svg viewBox="0 0 100 100" class="${sizeClass}" xmlns="http://www.w3.org/2000/svg">
+          <!-- Tuft feathers -->
+          <path d="M44 24 Q48 12 52 23 Q57 13 60 25" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+          <!-- Wings -->
+          <ellipse cx="21" cy="56" rx="8" ry="15" transform="rotate(-18 21 56)" fill="#f59e0b"/>
+          <ellipse cx="79" cy="56" rx="8" ry="15" transform="rotate(18 79 56)" fill="#f59e0b"/>
+          <!-- Main Body -->
+          <circle cx="50" cy="54" r="31" fill="#fbbf24"/>
+          <!-- Belly -->
+          <ellipse cx="50" cy="63" rx="20" ry="17" fill="#fef3c7"/>
+          <!-- Cheeks & Eyes -->
+          ${cheeks}
+          ${eyes}
+          <!-- Beak -->
+          <polygon points="50,51 44,58 56,58" fill="#f97316"/>
+          <!-- Feet -->
+          <path d="M40 84 L37 91 M40 84 L43 91" stroke="#ea580c" stroke-width="3" stroke-linecap="round"/>
+          <path d="M60 84 L57 91 M60 84 L63 91" stroke="#ea580c" stroke-width="3" stroke-linecap="round"/>
+          ${extras}
+        </svg>
+      `;
+    }
+
+    function populateStaticBirdIcons() {
+      const iconMap = {
+        brushIconTatil: 'tatil',
+        brushIconCikis: 'cikis',
+        brushIconGunduz: 'gunduz',
+        brushIconNobet: 'nobet',
+        legendIconTatil: 'tatil',
+        legendIconCikis: 'cikis',
+        legendIconGunduz: 'gunduz',
+        legendIconNobet: 'nobet'
+      };
+      Object.entries(iconMap).forEach(([id, mood]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = getBirdSvg(mood, true);
+      });
+    }
+
+    // =========================================================================
+    // 5. Calendar Rendering & Interaction Logic
+    // =========================================================================
+    function renderAll() {
+      const monthKey = getMonthKey();
+      const monthSchedule = state.schedules[monthKey] || {};
+      const monthName = TURKISH_MONTHS[state.month];
+      const monthYearText = `${monthName} ${state.year}`;
+
+      // Update Header & Badge
+      document.getElementById('controlMonthLabel').textContent = monthYearText;
+      document.getElementById('exportMonthBadge').textContent = monthYearText.toLocaleUpperCase('tr-TR');
+
+      const savedTitle = state.titles[monthKey] || '';
+      const titleInput = document.getElementById('scheduleTitleInput');
+      if (document.activeElement !== titleInput) {
+        titleInput.value = savedTitle;
+      }
+      document.getElementById('exportTitleDisplay').textContent =
+        savedTitle.trim() ? savedTitle.trim() : `${monthYearText} Nöbet Çizelgesi`;
+
+      // Calculate Calendar Grid (Monday = 0 ... Sunday = 6)
+      const firstDayRaw = new Date(state.year, state.month, 1).getDay();
+      const startOffset = (firstDayRaw + 6) % 7;
+      const daysInMonth = new Date(state.year, state.month + 1, 0).getDate();
+
+      const gridEl = document.getElementById('calendarGrid');
+      gridEl.innerHTML = '';
+
+      // Leading empty cells
+      for (let i = 0; i < startOffset; i++) {
+        const pad = document.createElement('div');
+        pad.className = 'cell-pad rounded-xl min-h-[62px] sm:min-h-[68px]';
+        gridEl.appendChild(pad);
+      }
+
+      // Counters
+      let countTatil = 0;
+      let countCikis = 0;
+      let countGunduz = 0;
+      let countNobet = 0;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const typeKey = monthSchedule[day] || 'empty';
+        const shift = SHIFT_TYPES[typeKey] || SHIFT_TYPES.empty;
+
+        if (typeKey === 'tatil') countTatil++;
+        else if (typeKey === 'cikis') countCikis++;
+        else if (typeKey === 'gunduz') countGunduz++;
+        else if (typeKey === 'nobet') countNobet++;
+
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = `day-box ${shift.cssClass} rounded-xl p-1.5 min-h-[62px] sm:min-h-[68px] flex flex-col justify-between text-left relative overflow-hidden`;
+        cell.addEventListener('click', () => handleDayTap(day));
+
+        const miniBirdHtml = typeKey !== 'empty'
+          ? `<span class="w-5 h-5 shrink-0">${getBirdSvg(typeKey, true)}</span>`
+          : '';
+
+        cell.innerHTML = `
+          <div class="w-full flex items-start justify-between gap-0.5">
+            <span class="font-display font-extrabold text-xs sm:text-sm leading-none">${day}</span>
+            ${miniBirdHtml}
+          </div>
+          <div class="w-full mt-1">
+            <div class="text-[9.5px] sm:text-[10px] font-bold leading-tight truncate">${shift.shortLabel}</div>
+            ${shift.hoursText ? `<div class="text-[8px] opacity-80 leading-tight truncate">${shift.hoursText}</div>` : ''}
+          </div>
+        `;
+        gridEl.appendChild(cell);
+      }
+
+      // Trailing empty cells to complete 7-column row
+      const totalCells = startOffset + daysInMonth;
+      const remainder = totalCells % 7;
+      if (remainder !== 0) {
+        for (let i = 0; i < 7 - remainder; i++) {
+          const pad = document.createElement('div');
+          pad.className = 'cell-pad rounded-xl min-h-[62px] sm:min-h-[68px]';
+          gridEl.appendChild(pad);
+        }
+      }
+
+      // Update Summary Stats
+      const totalHours = (countGunduz * 8) + (countNobet * 16);
+      document.getElementById('statTotalHours').textContent = `${totalHours} Saat`;
+      document.getElementById('statNobet').textContent = countNobet;
+      document.getElementById('statGunduz').textContent = countGunduz;
+      document.getElementById('statCikis').textContent = countCikis;
+      document.getElementById('statTatil').textContent = countTatil;
+
+      // Update Top Cute Bird Mascot Expression
+      let activeMood = state.birdMood;
+      if (activeMood === 'auto') {
+        if (state.lastTappedType) {
+          activeMood = state.lastTappedType;
+        } else if (countNobet > 0) {
+          activeMood = 'nobet';
+        } else if (countGunduz > 0) {
+          activeMood = 'gunduz';
+        } else if (countTatil > 0) {
+          activeMood = 'tatil';
+        } else {
+          activeMood = 'gunduz';
+        }
+      }
+
+      const moodMeta = {
+        gunduz: { tag: 'Enerjik Kuş', caption: 'Gündüz mesaisine hazır ve neşeli!' },
+        nobet: { tag: 'Gece Kuşu', caption: 'Kahvesi hazır, nöbette dikkatli!' },
+        cikis: { tag: 'Uykulu Kuş', caption: 'Nöbet çıkışı tatlı bir dinlenme zamanı.' },
+        tatil: { tag: 'Tatilde Kuş', caption: 'Güneş gözlüklü keyifli tatil modu!' }
+      };
+      const meta = moodMeta[activeMood] || moodMeta.gunduz;
+      document.getElementById('birdSvgContainer').innerHTML = getBirdSvg(activeMood, false);
+      document.getElementById('birdMoodTag').textContent = meta.tag;
+      document.getElementById('birdMoodCaption').textContent = meta.caption;
+    }
+
+    function handleDayTap(day) {
+      const monthKey = getMonthKey();
+      if (!state.schedules[monthKey]) {
+        state.schedules[monthKey] = {};
+      }
+      const currentType = state.schedules[monthKey][day] || 'empty';
+      // Toggle off to empty if tapping same shift again, otherwise apply selected shift
+      const nextType = (currentType === state.brush) ? 'empty' : state.brush;
+
+      if (nextType === 'empty') {
+        delete state.schedules[monthKey][day];
+      } else {
+        state.schedules[monthKey][day] = nextType;
+        state.lastTappedType = nextType;
+      }
+
+      saveStorage();
+      renderAll();
+    }
+// ... existing code ... -->
+    // Brush selection buttons
+    document.querySelectorAll('.brush-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.brush = btn.dataset.brush;
+        document.querySelectorAll('.brush-btn').forEach(b => {
+          b.classList.remove('ring-2', 'ring-offset-1', 'ring-slate-900', 'scale-[1.03]');
+        });
+        btn.classList.add('ring-2', 'ring-offset-1', 'ring-slate-900', 'scale-[1.03]');
+      });
+    });
+
+    // Month Navigation
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      state.month -= 1;
+      if (state.month < 0) {
+        state.month = 11;
+        state.year -= 1;
+      }
+      state.lastTappedType = null;
+      renderAll();
+    });
+
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      state.month += 1;
+      if (state.month > 11) {
+        state.month = 0;
+        state.year += 1;
+      }
+      state.lastTappedType = null;
+      renderAll();
+    });
+
+    // Title Input
+    document.getElementById('scheduleTitleInput').addEventListener('input', (e) => {
+      const monthKey = getMonthKey();
+      state.titles[monthKey] = e.target.value;
+      saveStorage();
+      const monthYearText = `${TURKISH_MONTHS[state.month]} ${state.year}`;
+      document.getElementById('exportTitleDisplay').textContent =
+        e.target.value.trim() ? e.target.value.trim() : `${monthYearText} Nöbet Çizelgesi`;
+    });
+
+    // Tap Bird Mascot to cycle expression manually
+    const BIRD_MODES = ['auto', 'gunduz', 'nobet', 'cikis', 'tatil'];
+    document.getElementById('birdMascotBox').addEventListener('click', () => {
+      const idx = BIRD_MODES.indexOf(state.birdMood);
+      state.birdMood = BIRD_MODES[(idx + 1) % BIRD_MODES.length];
+      renderAll();
+      const labels = {
+        auto: 'Kuş ifadesi: Otomatik',
+        gunduz: 'Kuş ifadesi: Enerjik Gündüz',
+        nobet: 'Kuş ifadesi: Gece Nöbeti',
+        cikis: 'Kuş ifadesi: Uykulu Çıkış',
+        tatil: 'Kuş ifadesi: Tatil Keyfi'
+      };
+      showToast(labels[state.birdMood]);
+    });
+
+    // Clear Month with Custom Confirmation Modal
+    document.getElementById('clearMonthBtn').addEventListener('click', () => {
+      document.getElementById('confirmModal').classList.remove('hidden');
+    });
+    document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+      document.getElementById('confirmModal').classList.add('hidden');
+    });
+    document.getElementById('confirmOkBtn').addEventListener('click', () => {
+      const monthKey = getMonthKey();
+      delete state.schedules[monthKey];
+      state.lastTappedType = null;
+      saveStorage();
+      renderAll();
+      document.getElementById('confirmModal').classList.add('hidden');
+      showToast('Bu ayın listesi temizlendi');
+    });
+
+    // =========================================================================
+    // 6. High-Resolution JPEG Generation & Native Mobile Share
+    // =========================================================================
+    async function generateScheduleJpegBlob() {
+      const exportCard = document.getElementById('exportCard');
+      document.body.classList.add('exporting');
+
+      try {
+        const canvas = await html2canvas(exportCard, {
+          scale: 3, // Crisp HD output for WhatsApp & gallery
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          logging: false
+        });
+
+        return await new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (blob) resolve({ blob, dataUrl: canvas.toDataURL('image/jpeg', 0.95) });
+              else reject(new Error('JPEG oluşturulamadı'));
+            },
+            'image/jpeg',
+            0.95
+          );
+        });
+      } finally {
+        document.body.classList.remove('exporting');
+      }
+    }
+
+    function getExportFileName() {
+      const monthSlug = TURKISH_MONTHS[state.month]
+        .toLowerCase()
+        .replace(/ş/g, 's')
+        .replace(/ı/g, 'i')
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ö/g, 'o')
+        .replace(/ç/g, 'c');
+      return `nobet-listesi-${monthSlug}-${state.year}.jpg`;
+    }
+
+    // Download JPEG Button
+    document.getElementById('downloadJpegBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('downloadJpegBtn');
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Hazırlanıyor...</span>';
+
+      try {
+        const { dataUrl } = await generateScheduleJpegBlob();
+        const fileName = getExportFileName();
+
+        // Trigger download
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Also open preview modal so iOS Safari users can easily save to Photos if needed
+        const imgEl = document.getElementById('generatedJpegImg');
+        const modalLink = document.getElementById('modalDownloadLink');
+        imgEl.src = dataUrl;
+        modalLink.href = dataUrl;
+        modalLink.download = fileName;
+        document.getElementById('previewModal').classList.remove('hidden');
+        showToast('JPEG görseli oluşturuldu!');
+      } catch (err) {
+        console.error(err);
+        showToast('Görsel oluşturulurken bir hata oluştu.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    });
+
+    // Share JPEG Button (WhatsApp / iOS & Android Native Share Sheet)
+    document.getElementById('shareJpegBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('shareJpegBtn');
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Hazırlanıyor...</span>';
+
+      try {
+        const { blob, dataUrl } = await generateScheduleJpegBlob();
+        const fileName = getExportFileName();
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
+        const monthYearText = `${TURKISH_MONTHS[state.month]} ${state.year}`;
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `${monthYearText} Nöbet Listesi`,
+            text: `${monthYearText} aylık nöbet çizelgesi`
+          });
+          showToast('Paylaşım açıldı!');
+        } else {
+          // Fallback to preview modal for desktop or older browsers
+          const imgEl = document.getElementById('generatedJpegImg');
+          const modalLink = document.getElementById('modalDownloadLink');
+          imgEl.src = dataUrl;
+          modalLink.href = dataUrl;
+          modalLink.download = fileName;
+          document.getElementById('previewModal').classList.remove('hidden');
+          showToast('Görsel hazır, kaydedip paylaşabilirsiniz');
+        }
+      } catch (err) {
+        if (err && err.name !== 'AbortError') {
+          console.error(err);
+          showToast('Paylaşım tamamlanamadı');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    });
+
+    // Modal Controls
+    document.getElementById('closePreviewModal').addEventListener('click', () => {
+      document.getElementById('previewModal').classList.add('hidden');
+    });
+    document.getElementById('modalCloseBtn2').addEventListener('click', () => {
+      document.getElementById('previewModal').classList.add('hidden');
+    });
+
+    document.getElementById('btnInstallHelp').addEventListener('click', () => {
+      document.getElementById('installModal').classList.remove('hidden');
+    });
+    document.getElementById('closeInstallModal').addEventListener('click', () => {
+      document.getElementById('installModal').classList.add('hidden');
+    });
+    document.getElementById('confirmInstallModal').addEventListener('click', () => {
+      document.getElementById('installModal').classList.add('hidden');
+    });
+
+    // =========================================================================
+    // 7. Initialize App on Load
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      populateStaticBirdIcons();
+      loadStorage();
+      renderAll();
+    });
+  </script>
+</body>
+</html>
