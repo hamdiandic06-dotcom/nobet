@@ -59,55 +59,79 @@
       color: #1e40af;
     }
 
-    /* Export mode helper to freeze animations and prevent text clipping/shifting during screenshot */
+    /* 3. Gündüz (08:00 - 16:00): Daha koyu bir renk (Deep Petrol Blue) */
+    .shift-gunduz {
+      background-color: #1e4e68;
+      border: 1.5px solid #15384b;
+      color: #ffffff;
+    }
+
+    /* 4. Nöbet (16:00 - 08:00): Siyah */
+    .shift-nobet {
+      background-color: #09090b;
+      border: 1.5px solid #000000;
+      color: #ffffff;
+    }
+
+    /* Unselected / Empty Day Box */
+    .shift-empty {
+      background-color: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      color: #1e293b;
+    }
+
+    .day-box {
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .day-box:active {
+      transform: scale(0.95);
+    }
+
+    @keyframes gentleBob {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+    }
+
+    .bird-bob {
+      animation: gentleBob 2.8s ease-in-out infinite;
+    }
+
+    /* Export mode helper to freeze animations and keep text neatly inside boxes */
     .exporting .bird-bob {
       animation: none !important;
       transform: none !important;
     }
 
     .exporting #exportCard {
-      width: 512px !important;
-      max-width: 512px !important;
-      padding: 20px !important;
+      width: 520px !important;
+      max-width: 520px !important;
+      padding: 18px !important;
     }
 
     .exporting #exportCard .truncate {
       overflow: visible !important;
       text-overflow: clip !important;
       white-space: normal !important;
-    }
-
-    .exporting #exportCard #exportMonthBadge {
-      line-height: 1.3 !important;
-      padding-top: 3px !important;
-      padding-bottom: 3px !important;
-    }
-
-    .exporting #exportCard #exportTitleDisplay {
-      line-height: 1.3 !important;
-    }
-
-    .exporting #exportCard #birdMoodTag {
-      line-height: 1.3 !important;
-      padding-top: 3px !important;
-      padding-bottom: 3px !important;
+      word-break: break-word;
     }
 
     .exporting #exportCard .day-box {
-      min-height: 74px !important;
-      padding: 6px !important;
-      overflow: visible !important;
+      min-height: 68px !important;
+      padding: 5px 6px !important;
     }
 
     .exporting #exportCard .day-box .shift-title {
-      font-size: 9.5px !important;
-      line-height: 1.25 !important;
+      font-size: 9px !important;
+      line-height: 1.2 !important;
     }
 
     .exporting #exportCard .day-box .shift-hours {
-      font-size: 7.5px !important;
-      line-height: 1.2 !important;
-      margin-top: 2px !important;
+      font-size: 7px !important;
+      line-height: 1.15 !important;
+      margin-top: 1px !important;
     }
   </style>
 </head>
@@ -721,8 +745,8 @@
             ${miniBirdHtml}
           </div>
           <div class="w-full mt-1">
-            <div class="shift-title text-[9.5px] sm:text-[10px] font-bold leading-tight truncate">${shift.shortLabel}</div>
-            ${shift.hoursText ? `<div class="shift-hours text-[8px] opacity-80 leading-tight truncate">${shift.hoursText}</div>` : ''}
+            <div class="shift-title text-[8.5px] sm:text-[10px] font-bold leading-tight truncate">${shift.shortLabel}</div>
+            ${shift.hoursText ? `<div class="shift-hours text-[7px] sm:text-[8px] opacity-85 leading-tight truncate">${shift.hoursText}</div>` : ''}
           </div>
         `;
         gridEl.appendChild(cell);
@@ -794,7 +818,7 @@
       saveStorage();
       renderAll();
     }
-// ... existing code ... -->
+
     // Brush selection buttons
     document.querySelectorAll('.brush-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -878,16 +902,13 @@
       document.body.classList.add('exporting');
 
       try {
-        // Wait a frame so .exporting layout & typography apply cleanly before capture
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
         const canvas = await html2canvas(exportCard, {
-          scale: 2.5, // Crisp HD output for WhatsApp & gallery without extreme memory load
+          scale: 2.5,
           backgroundColor: '#ffffff',
           useCORS: true,
-          logging: false,
-          width: exportCard.scrollWidth,
-          height: exportCard.scrollHeight
+          logging: false
         });
 
         return await new Promise((resolve, reject) => {
