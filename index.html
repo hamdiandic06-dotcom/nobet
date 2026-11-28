@@ -4,11 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#1e293b" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Nöbet Takvimi" />
   <meta name="description" content="Aylık nöbet çizelgesi oluşturucu ve yüksek çözünürlüklü JPEG dışa aktarma uygulaması." />
   <title>Aylık Nöbet Takvimi</title>
+
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
 
   <!-- Google Fonts: Inter & Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,10 +26,6 @@
 
   <!-- html2canvas for crisp JPEG export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <!-- Inline SVG App Icon & Dynamic PWA Manifest Setup -->
-  <link id="apple-touch-icon" rel="apple-touch-icon" href="" />
-  <link id="pwa-manifest" rel="manifest" href="" />
 
   <style>
     * {
@@ -44,29 +46,28 @@
       font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
     }
 
-    /* Custom Shift Colors (Strictly matching user specifications) */
-    /* 1. Tatil Günü: Açık bir renk (Soft Warm Mint / Cream) */
+    /* 1. Tatil Günü */
     .shift-tatil {
       background-color: #ecfdf5;
       border: 1.5px solid #a7f3d0;
       color: #065f46;
     }
 
-    /* 2. Nöbet Çıkışı: Açık bir renk (Soft Pastel Sky Blue) */
+    /* 2. Nöbet Çıkışı */
     .shift-cikis {
       background-color: #eff6ff;
       border: 1.5px solid #bfdbfe;
       color: #1e40af;
     }
 
-    /* 3. Gündüz (08:00 - 16:00): Daha koyu bir renk (Deep Petrol Blue) */
+    /* 3. Gündüz (08:00 - 16:00) */
     .shift-gunduz {
       background-color: #1e4e68;
       border: 1.5px solid #15384b;
       color: #ffffff;
     }
 
-    /* 4. Nöbet (16:00 - 08:00): Siyah */
+    /* 4. Nöbet (16:00 - 08:00) */
     .shift-nobet {
       background-color: #09090b;
       border: 1.5px solid #000000;
@@ -99,7 +100,7 @@
       animation: gentleBob 2.8s ease-in-out infinite;
     }
 
-    /* Export mode helper to freeze animations and keep text neatly inside boxes */
+    /* Export mode helper */
     .exporting .bird-bob {
       animation: none !important;
       transform: none !important;
@@ -137,7 +138,7 @@
 </head>
 <body class="min-h-screen pb-28">
 
-  <!-- Top App Navigation Bar (Not included in JPEG export) -->
+  <!-- Top App Navigation Bar -->
   <header class="sticky top-0 z-30 bg-slate-900 text-white shadow-md px-4 py-3">
     <div class="max-w-lg mx-auto flex items-center justify-between gap-2">
       <div class="flex items-center gap-2.5">
@@ -151,16 +152,16 @@
       </div>
 
       <button id="btnInstallHelp" type="button" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 px-3 py-2 rounded-xl border border-slate-700 transition">
-        📲 Ana Ekrana Ekle
+        📲 Uygulama Kur
       </button>
     </div>
   </header>
 
   <main class="max-w-lg mx-auto px-3 pt-4 space-y-4">
 
-    <!-- Control Panel Card (Not included in JPEG export) -->
+    <!-- Control Panel Card -->
     <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-3.5 space-y-3">
-      <!-- Month Navigation & Title Input -->
+      <!-- Month Navigation -->
       <div class="flex items-center justify-between gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200/70">
         <button id="prevMonthBtn" type="button" aria-label="Önceki Ay" class="w-10 h-10 rounded-lg bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 font-bold active:scale-95 transition">
           ◀
@@ -188,10 +189,7 @@
         />
       </div>
 
-      <!-- Brush Mode Selector (Tap a shift type then tap days, or cycle mode) -->
-      <div>
-        <div class="flex items-center justify-between mb-1.5">
-      <!-- Brush Mode Selector (4 direct shift buttons without 'Sırayla' or 'Fırça' labels) -->
+      <!-- Brush Mode Selector -->
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Gün Türü Seçimi</span>
@@ -227,12 +225,12 @@
     </section>
 
     <!-- ===================================================================== -->
-    <!-- EXPORTABLE JPEG CARD AREA (Everything inside #exportCard becomes JPEG) -->
+    <!-- EXPORTABLE JPEG CARD AREA -->
     <!-- ===================================================================== -->
     <section id="exportWrapper" class="rounded-2xl shadow-md overflow-hidden border border-slate-200 bg-white">
       <div id="exportCard" class="bg-white p-4 sm:p-5">
 
-        <!-- Top Banner with Cute Bird Mascot & Dynamic Mood Expression -->
+        <!-- Top Banner with Cute Bird Mascot -->
         <div class="flex items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-200">
           <div class="min-w-0 flex-1">
             <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1">
@@ -246,10 +244,8 @@
             </p>
           </div>
 
-          <!-- Cute Bird SVG Container right above the calendar boxes -->
           <div id="birdMascotBox" title="Kuş ifadesini değiştirmek için dokun" class="shrink-0 cursor-pointer select-none flex flex-col items-center">
             <div id="birdSvgContainer" class="bird-bob w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-gradient-to-b from-amber-50 to-orange-50/70 border border-amber-200/80 flex items-center justify-center p-1 shadow-2xs">
-              <!-- Dynamic Cute Bird SVG injected by JS -->
             </div>
             <span id="birdMoodTag" class="mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
               Neşeli Kuş
@@ -277,7 +273,7 @@
           </div>
         </div>
 
-        <!-- Weekday Column Headers (Monday to Sunday) -->
+        <!-- Weekday Column Headers -->
         <div class="grid grid-cols-7 gap-1.5 mb-1.5 text-center">
           <div class="text-[11px] font-bold text-slate-600 py-1 bg-slate-100 rounded-lg">Pzt</div>
           <div class="text-[11px] font-bold text-slate-600 py-1 bg-slate-100 rounded-lg">Sal</div>
@@ -289,11 +285,9 @@
         </div>
 
         <!-- Calendar Grid Boxes -->
-        <div id="calendarGrid" class="grid grid-cols-7 gap-1.5">
-          <!-- Day boxes rendered dynamically via JS -->
-        </div>
+        <div id="calendarGrid" class="grid grid-cols-7 gap-1.5"></div>
 
-        <!-- Bottom Summary Footer (Compact, clean summary requested by user) -->
+        <!-- Bottom Summary Footer -->
         <div class="mt-3.5 pt-3 border-t border-slate-200 bg-slate-50/90 rounded-xl px-3 py-2.5">
           <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-slate-700">
             <div class="font-extrabold text-slate-900 text-xs">
@@ -325,7 +319,7 @@
 
   </main>
 
-  <!-- Sticky Bottom Action Bar for JPEG Export & Share -->
+  <!-- Sticky Bottom Action Bar -->
   <div class="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 shadow-lg">
     <div class="max-w-lg mx-auto flex items-center gap-2.5">
       <button id="downloadJpegBtn" type="button" class="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-display font-bold text-sm py-3.5 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition">
@@ -337,7 +331,7 @@
     </div>
   </div>
 
-  <!-- Preview / Fallback Modal (Shown if direct share isn't supported or for easy long-press save on iOS) -->
+  <!-- Preview / Fallback Modal -->
   <div id="previewModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200">
       <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
@@ -347,7 +341,7 @@
       <div class="p-4 bg-slate-100 max-h-[65vh] overflow-y-auto flex flex-col items-center">
         <img id="generatedJpegImg" src="" alt="Aylık Nöbet Takvimi JPEG" class="w-full h-auto rounded-xl shadow-md border border-slate-200" />
         <p class="text-[11px] text-slate-600 text-center mt-2.5">
-          iPhone/Android'de görselin üzerine basılı tutup <strong>"Fotoğraflara Kaydet"</strong> diyebilir veya aşağıdaki butondan indirebilirsiniz.
+          Görselin üzerine basılı tutup <strong>"Fotoğraflara Kaydet"</strong> diyebilir veya aşağıdaki butondan indirebilirsiniz.
         </p>
       </div>
       <div class="p-3 bg-white border-t border-slate-200 flex gap-2">
@@ -371,11 +365,11 @@
       <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
         <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
           <div class="font-bold text-slate-900 mb-1">🍎 iPhone (Safari):</div>
-          Alt menüdeki <strong>Paylaş</strong> (kare içinde yukarı ok) simgesine dokunun, aşağı kaydırıp <strong>"Ana Ekrana Ekle"</strong> seçeneğine basın.
+          Alt menüdeki <strong>Paylaş</strong> simgesine dokunun, aşağı kaydırıp <strong>"Ana Ekrana Ekle"</strong> seçeneğine basın.
         </div>
         <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-          <div class="font-bold text-slate-900 mb-1">🤖 Android (Chrome):</div>
-          Sağ üst köşedeki <strong>⋮ (Üç Nokta)</strong> menüsüne dokunun ve <strong>"Ana ekrana ekle"</strong> veya <strong>"Uygulamayı yükle"</strong> seçeneğine basın.
+          <div class="font-bold text-slate-900 mb-1">🤖 Android (Chrome / APK):</div>
+          Sağ üst köşedeki <strong>⋮ (Üç Nokta)</strong> menüsüne dokunun ve <strong>"Uygulamayı yükle"</strong> seçeneğine basın veya doğrudan APK dosyasını kurun.
         </div>
       </div>
       <button id="confirmInstallModal" type="button" class="w-full py-3 rounded-xl bg-slate-900 text-white font-bold text-xs">
@@ -384,7 +378,7 @@
     </div>
   </div>
 
-  <!-- Custom Confirmation Modal (Replaces window.confirm) -->
+  <!-- Custom Confirmation Modal -->
   <div id="confirmModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
       <h3 id="confirmModalTitle" class="font-display font-bold text-slate-900 text-base">Emin misiniz?</h3>
@@ -404,52 +398,16 @@
   </div>
 
   <script>
-    /**
-     * Aylık Nöbet Takvimi & JPEG Oluşturucu
-     * Single-file PWA with dynamic cute bird mascot expressions,
-     * 4-color shift coding, automatic working hour statistics, and JPEG export.
-     */
-
     // =========================================================================
-    // 1. PWA Manifest & SVG Icon Setup (Self-contained)
+    // 1. Service Worker Registration (Required for Android APK / PWA)
     // =========================================================================
-    (function setupPWA() {
-      const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-        <rect width="512" height="512" rx="112" fill="#1e293b"/>
-        <circle cx="256" cy="272" r="145" fill="#fbbf24"/>
-        <ellipse cx="256" cy="312" rx="95" ry="82" fill="#fef3c7"/>
-        <polygon points="256,258 232,286 280,286" fill="#f97316"/>
-        <circle cx="206" cy="232" r="20" fill="#0f172a"/>
-        <circle cx="212" cy="226" r="7" fill="#ffffff"/>
-        <circle cx="306" cy="232" r="20" fill="#0f172a"/>
-        <circle cx="312" cy="226" r="7" fill="#ffffff"/>
-        <path d="M235 130 Q256 90 275 132 Q295 95 305 138" fill="none" stroke="#f59e0b" stroke-width="18" stroke-linecap="round"/>
-      </svg>`;
-      const encodedIcon = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg);
-      const appleIconEl = document.getElementById('apple-touch-icon');
-      if (appleIconEl) appleIconEl.href = encodedIcon;
-
-      const manifest = {
-        name: 'Aylık Nöbet Takvimi',
-        short_name: 'Nöbet Takvimi',
-        description: 'Aylık nöbet listesi oluşturucu ve JPEG çıktı aracı',
-        start_url: '.',
-        display: 'standalone',
-        background_color: '#f1f5f9',
-        theme_color: '#1e293b',
-        icons: [
-          {
-            src: encodedIcon,
-            sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-          }
-        ]
-      };
-      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-      const manifestEl = document.getElementById('pwa-manifest');
-      if (manifestEl) manifestEl.href = URL.createObjectURL(manifestBlob);
-    })();
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch((err) => {
+          console.warn('Service Worker kaydı başarısız:', err);
+        });
+      });
+    }
 
     // =========================================================================
     // 2. Application State & Shift Definitions
@@ -502,9 +460,6 @@
       }
     };
 
-    const CYCLE_ORDER = ['empty', 'tatil', 'cikis', 'gunduz', 'nobet'];
-
-    // Default to next month if we're in the last week of the month, else current month
     const now = new Date();
     let initialYear = now.getFullYear();
     let initialMonth = now.getMonth();
@@ -518,12 +473,12 @@
 
     const state = {
       year: initialYear,
-      month: initialMonth, // 0 - 11
-      brush: 'tatil',      // 'tatil' | 'cikis' | 'gunduz' | 'nobet'
-      birdMood: 'auto',    // 'auto' | 'tatil' | 'cikis' | 'gunduz' | 'nobet'
+      month: initialMonth,
+      brush: 'tatil',
+      birdMood: 'auto',
       lastTappedType: null,
-      schedules: {},       // { "2026-11": { "1": "gunduz", "2": "nobet", ... } }
-      titles: {}           // { "2026-11": "Gamze Nur Andıç" }
+      schedules: {},
+      titles: {}
     };
 
     // =========================================================================
@@ -575,11 +530,10 @@
     }
 
     // =========================================================================
-    // 4. Cute Bird SVG Generators (Mascot + Mini Day Icons)
+    // 4. Cute Bird SVG Generators
     // =========================================================================
     function getBirdSvg(mood, isMini = false) {
       const sizeClass = isMini ? 'w-full h-full' : 'w-16 h-16';
-      // Base round cute bird body
       let extras = '';
       let eyes = `
         <circle cx="38" cy="46" r="4.5" fill="#0f172a"/>
@@ -593,7 +547,6 @@
       `;
 
       if (mood === 'tatil') {
-        // Sunglasses & joyful holiday vibe
         eyes = `
           <rect x="27" y="40" width="19" height="11" rx="3.5" fill="#0f172a"/>
           <rect x="54" y="40" width="19" height="11" rx="3.5" fill="#0f172a"/>
@@ -601,11 +554,8 @@
           <line x1="30" y1="43" x2="35" y2="48" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round"/>
           <line x1="57" y1="43" x2="62" y2="48" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round"/>
         `;
-        extras = `
-          <circle cx="80" cy="22" r="7" fill="#facc15"/>
-        `;
+        extras = `<circle cx="80" cy="22" r="7" fill="#facc15"/>`;
       } else if (mood === 'cikis') {
-        // Sleepy closed eyes & nightcap / Zzz
         eyes = `
           <path d="M32 47 Q38 52 44 47" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>
           <path d="M56 47 Q62 52 68 47" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>
@@ -616,7 +566,6 @@
           <text x="72" y="26" font-size="11" font-weight="800" fill="#2563eb">zZ</text>
         `;
       } else if (mood === 'nobet') {
-        // Night shift owl-like alert eyes + crescent moon / coffee mug
         eyes = `
           <circle cx="38" cy="46" r="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
           <circle cx="38" cy="46" r="3.5" fill="#0f172a"/>
@@ -631,7 +580,6 @@
           <path d="M80 67 H83 A3 3 0 0 1 83 73 H80" fill="none" stroke="#78350f" stroke-width="2"/>
         `;
       } else {
-        // Gündüz / Default happy energetic bird
         eyes = `
           <path d="M33 46 Q38 40 43 46" fill="none" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round"/>
           <path d="M57 46 Q62 40 67 46" fill="none" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round"/>
@@ -640,21 +588,14 @@
 
       return `
         <svg viewBox="0 0 100 100" class="${sizeClass}" xmlns="http://www.w3.org/2000/svg">
-          <!-- Tuft feathers -->
           <path d="M44 24 Q48 12 52 23 Q57 13 60 25" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
-          <!-- Wings -->
           <ellipse cx="21" cy="56" rx="8" ry="15" transform="rotate(-18 21 56)" fill="#f59e0b"/>
           <ellipse cx="79" cy="56" rx="8" ry="15" transform="rotate(18 79 56)" fill="#f59e0b"/>
-          <!-- Main Body -->
           <circle cx="50" cy="54" r="31" fill="#fbbf24"/>
-          <!-- Belly -->
           <ellipse cx="50" cy="63" rx="20" ry="17" fill="#fef3c7"/>
-          <!-- Cheeks & Eyes -->
           ${cheeks}
           ${eyes}
-          <!-- Beak -->
           <polygon points="50,51 44,58 56,58" fill="#f97316"/>
-          <!-- Feet -->
           <path d="M40 84 L37 91 M40 84 L43 91" stroke="#ea580c" stroke-width="3" stroke-linecap="round"/>
           <path d="M60 84 L57 91 M60 84 L63 91" stroke="#ea580c" stroke-width="3" stroke-linecap="round"/>
           ${extras}
@@ -688,7 +629,6 @@
       const monthName = TURKISH_MONTHS[state.month];
       const monthYearText = `${monthName} ${state.year}`;
 
-      // Update Header & Badge
       document.getElementById('controlMonthLabel').textContent = monthYearText;
       document.getElementById('exportMonthBadge').textContent = monthYearText.toLocaleUpperCase('tr-TR');
 
@@ -700,7 +640,6 @@
       document.getElementById('exportTitleDisplay').textContent =
         savedTitle.trim() ? savedTitle.trim() : `${monthYearText} Nöbet Çizelgesi`;
 
-      // Calculate Calendar Grid (Monday = 0 ... Sunday = 6)
       const firstDayRaw = new Date(state.year, state.month, 1).getDay();
       const startOffset = (firstDayRaw + 6) % 7;
       const daysInMonth = new Date(state.year, state.month + 1, 0).getDate();
@@ -708,14 +647,12 @@
       const gridEl = document.getElementById('calendarGrid');
       gridEl.innerHTML = '';
 
-      // Leading empty cells
       for (let i = 0; i < startOffset; i++) {
         const pad = document.createElement('div');
         pad.className = 'cell-pad rounded-xl min-h-[62px] sm:min-h-[68px]';
         gridEl.appendChild(pad);
       }
 
-      // Counters
       let countTatil = 0;
       let countCikis = 0;
       let countGunduz = 0;
@@ -752,7 +689,6 @@
         gridEl.appendChild(cell);
       }
 
-      // Trailing empty cells to complete 7-column row
       const totalCells = startOffset + daysInMonth;
       const remainder = totalCells % 7;
       if (remainder !== 0) {
@@ -763,7 +699,6 @@
         }
       }
 
-      // Update Summary Stats
       const totalHours = (countGunduz * 8) + (countNobet * 16);
       document.getElementById('statTotalHours').textContent = `${totalHours} Saat`;
       document.getElementById('statNobet').textContent = countNobet;
@@ -771,20 +706,13 @@
       document.getElementById('statCikis').textContent = countCikis;
       document.getElementById('statTatil').textContent = countTatil;
 
-      // Update Top Cute Bird Mascot Expression
       let activeMood = state.birdMood;
       if (activeMood === 'auto') {
-        if (state.lastTappedType) {
-          activeMood = state.lastTappedType;
-        } else if (countNobet > 0) {
-          activeMood = 'nobet';
-        } else if (countGunduz > 0) {
-          activeMood = 'gunduz';
-        } else if (countTatil > 0) {
-          activeMood = 'tatil';
-        } else {
-          activeMood = 'gunduz';
-        }
+        if (state.lastTappedType) activeMood = state.lastTappedType;
+        else if (countNobet > 0) activeMood = 'nobet';
+        else if (countGunduz > 0) activeMood = 'gunduz';
+        else if (countTatil > 0) activeMood = 'tatil';
+        else activeMood = 'gunduz';
       }
 
       const moodMeta = {
@@ -805,7 +733,6 @@
         state.schedules[monthKey] = {};
       }
       const currentType = state.schedules[monthKey][day] || 'empty';
-      // Toggle off to empty if tapping same shift again, otherwise apply selected shift
       const nextType = (currentType === state.brush) ? 'empty' : state.brush;
 
       if (nextType === 'empty') {
@@ -819,7 +746,6 @@
       renderAll();
     }
 
-    // Brush selection buttons
     document.querySelectorAll('.brush-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         state.brush = btn.dataset.brush;
@@ -830,7 +756,6 @@
       });
     });
 
-    // Month Navigation
     document.getElementById('prevMonthBtn').addEventListener('click', () => {
       state.month -= 1;
       if (state.month < 0) {
@@ -851,7 +776,6 @@
       renderAll();
     });
 
-    // Title Input
     document.getElementById('scheduleTitleInput').addEventListener('input', (e) => {
       const monthKey = getMonthKey();
       state.titles[monthKey] = e.target.value;
@@ -861,7 +785,6 @@
         e.target.value.trim() ? e.target.value.trim() : `${monthYearText} Nöbet Çizelgesi`;
     });
 
-    // Tap Bird Mascot to cycle expression manually
     const BIRD_MODES = ['auto', 'gunduz', 'nobet', 'cikis', 'tatil'];
     document.getElementById('birdMascotBox').addEventListener('click', () => {
       const idx = BIRD_MODES.indexOf(state.birdMood);
@@ -877,7 +800,6 @@
       showToast(labels[state.birdMood]);
     });
 
-    // Clear Month with Custom Confirmation Modal
     document.getElementById('clearMonthBtn').addEventListener('click', () => {
       document.getElementById('confirmModal').classList.remove('hidden');
     });
@@ -895,7 +817,7 @@
     });
 
     // =========================================================================
-    // 6. High-Resolution JPEG Generation & Native Mobile Share
+    // 6. High-Resolution JPEG Generation & Native Mobile Share (APK Compatible)
     // =========================================================================
     async function generateScheduleJpegBlob() {
       const exportCard = document.getElementById('exportCard');
@@ -938,7 +860,6 @@
       return `nobet-listesi-${monthSlug}-${state.year}.jpg`;
     }
 
-    // Download JPEG Button
     document.getElementById('downloadJpegBtn').addEventListener('click', async () => {
       const btn = document.getElementById('downloadJpegBtn');
       const originalHtml = btn.innerHTML;
@@ -946,22 +867,21 @@
       btn.innerHTML = '<span>⏳ Hazırlanıyor...</span>';
 
       try {
-        const { dataUrl } = await generateScheduleJpegBlob();
+        const { blob, dataUrl } = await generateScheduleJpegBlob();
         const fileName = getExportFileName();
+        const blobUrl = URL.createObjectURL(blob);
 
-        // Trigger download
         const link = document.createElement('a');
-        link.href = dataUrl;
+        link.href = blobUrl;
         link.download = fileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        // Also open preview modal so iOS Safari users can easily save to Photos if needed
         const imgEl = document.getElementById('generatedJpegImg');
         const modalLink = document.getElementById('modalDownloadLink');
         imgEl.src = dataUrl;
-        modalLink.href = dataUrl;
+        modalLink.href = blobUrl;
         modalLink.download = fileName;
         document.getElementById('previewModal').classList.remove('hidden');
         showToast('JPEG görseli oluşturuldu!');
@@ -974,7 +894,6 @@
       }
     });
 
-    // Share JPEG Button (WhatsApp / iOS & Android Native Share Sheet)
     document.getElementById('shareJpegBtn').addEventListener('click', async () => {
       const btn = document.getElementById('shareJpegBtn');
       const originalHtml = btn.innerHTML;
@@ -995,11 +914,10 @@
           });
           showToast('Paylaşım açıldı!');
         } else {
-          // Fallback to preview modal for desktop or older browsers
           const imgEl = document.getElementById('generatedJpegImg');
           const modalLink = document.getElementById('modalDownloadLink');
           imgEl.src = dataUrl;
-          modalLink.href = dataUrl;
+          modalLink.href = URL.createObjectURL(blob);
           modalLink.download = fileName;
           document.getElementById('previewModal').classList.remove('hidden');
           showToast('Görsel hazır, kaydedip paylaşabilirsiniz');
@@ -1015,7 +933,6 @@
       }
     });
 
-    // Modal Controls
     document.getElementById('closePreviewModal').addEventListener('click', () => {
       document.getElementById('previewModal').classList.add('hidden');
     });
